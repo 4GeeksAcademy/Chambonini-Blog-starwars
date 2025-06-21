@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Planet Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="bg-light">
+  <div class="container" id="app">Cargando...</div>
+
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useEffect, useState } = React;
+
+    const PlanetPage = () => {
+      const [planet, setPlanet] = useState(null);
+      const [error, setError] = useState(null);
+      const [favorites, setFavorites] = useState([]);
+      const [id, setId] = useState(null);
+
+      // Leer favoritos desde localStorage
+      useEffect(() => {
+        const saved = JSON.parse(localStorage.getItem("favorites")) || [];
+        setFavorites(saved);
+      }, []);
+
+      // Guardar cambios en favoritos
+      useEffect(() => {
+        localStorage.setItem("favorites", JSON.stringify(favorites));
+      }, [favorites]);
+
+      const removeFavorite = name => {
+        setFavorites(favorites.filter(f => f !== name));
+      };
+
+      useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const planetId = params.get("id");
+        setId(planetId);
+
+        if (!planetId) {
+          setError("No planet ID provided in URL.");
+          return;
+        }
+
+        fetch(`https://www.swapi.tech/api/planets/${planetId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.result && data.result.properties) {
+              setPlanet(data.result.properties);
+            } else {
+              setError("Planet not found.");
+            }
+          })
+          .catch(() => setError("Failed to fetch planet."));
+      }, []);
+
+      if (error) {
+        return <div className="alert alert-danger text-center mt-4">{error}</div>;
+      }
+
+      if (!planet || !id) {
+        return <div className="text-center mt-4">Loading planet...</div>;
+      }
+
+      return (
+        <div>
+          {/* NAVBAR */}
+          <nav className="d-flex justify-content-between align-items-center py-3">
+            <a href="index.html">
+              <img src="https://1000marcas.net/wp-content/uploads/2019/12/Star-Wars-Logo.png" style={{ height: 40 }} alt="Star Wars Logo" />
+            </a>
+            <div className="dropdown">
+              <button className="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Favorites {favorites.length}
+              </button>
+              <ul className="dropdown-menu dropdown-menu-end">
+                {favorites.length === 0 && <li className="dropdown-item">Empty</li>}
+                {favorites.map((fav, index) => (
+                  <li key={index} className="dropdown-item d-flex justify-content-between align-items-center">
+                    {fav}
+                    <button onClick={() => removeFavorite(fav)} className="btn btn-sm btn-danger ms-2">
+                      <i className="fas fa-trash-alt"></i>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </nav>
+
+          <div className="row mb-4">
+            <div className="col-md-6">
+              <img
+                src={`https://raw.githubusercontent.com/breatheco-de/swapi-images/master/public/images/planets/${id}.jpg`}
+                alt={planet.name}
+                className="img-fluid rounded"
+              />
+            </div>
+            <div className="col-md-6">
+              <h2 className="fw-bold">{planet.name}</h2>
+              <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eget lorem at metus ullamcorper efficitur.
+              </p>
+            </div>
+          </div>
+
+          <hr className="border-danger border-2" />
+
+          <div className="row text-center text-danger fw-bold">
+            <div className="col">
+              <p>Name<br /><span className="fw-normal">{planet.name}</span></p>
+            </div>
+            <div className="col">
+              <p>Climate<br /><span className="fw-normal">{planet.climate}</span></p>
+            </div>
+            <div className="col">
+              <p>Population<br /><span className="fw-normal">{planet.population}</span></p>
+            </div>
+            <div className="col">
+              <p>Terrain<br /><span className="fw-normal">{planet.terrain}</span></p>
+            </div>
+            <div className="col">
+              <p>Gravity<br /><span className="fw-normal">{planet.gravity}</span></p>
+            </div>
+            <div className="col">
+              <p>Orbital Period<br /><span className="fw-normal">{planet.orbital_period}</span></p>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById("app")).render(<PlanetPage />);
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
